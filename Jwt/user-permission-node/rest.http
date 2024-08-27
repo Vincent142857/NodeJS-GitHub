@@ -1,0 +1,14 @@
+GET http://localhost:3000/course/get-lists
+Content-Type: application/json
+
+{
+  "userId": 2
+}
+
+###
+GET http://localhost:3000/course/3
+Content-Type: application/json
+
+{
+  "userId": 1
+}

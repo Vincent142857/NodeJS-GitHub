@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Axios JWT</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
+</head>
+
+<body>
+
+  <button id="_login">Login</button>
+  <button id="_getList">Get List</button>
+
+
+
+  <script>
+    const instance = axios.create({
+      baseURL: '/api',
+      timeout: 3 * 1000,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    //xu ly data truoc khi xuong server
+    instance.interceptors.request.use(async (config) => {
+      console.log(`Before request`);
+      //k can ktra doi voi 2 route nay
+      if (config.url.indexOf('/login') >= 0 || config.url.indexOf('/refreshToken') >= 0) {
+        return config;
+      }
+      const token = await instance.getLocalAccessToken();
+      config.headers['x-token'] = token;
+      console.log(`Before send request, token>>>`, token);
+
+      //cach 1
+      // const { token, timeExpired } = await instance.getLocalAccessToken();
+      // console.log({ token, timeExpired });
+      // const now = new Date().getTime();
+
+      // console.log(`timeExpired>>>${timeExpired}, now>>> ${now}`);
+
+      // if (timeExpired < now) {
+      //   try {
+      //     console.log(`AccessToken expired! Now refreshToken...create new accessToken`);
+
+      //     const { status, elements: { token, timeExpired } } = await refreshToken();
+      //     console.log(`check new token`, token);
+      //     if (status === 'success') {
+      //       //set token vs timeExpired localStorage
+      //       await instance.setLocalAccessToken({ token, timeExpired });
+      //       return config;
+      //     }
+      //   } catch (error) {
+      //     return Promise.reject(error)
+      //   }
+      // }
+
+      return config;
+    }, err => {
+      return Promise.reject(err)
+    })
+
+    //xu ly data sau khi res tu server
+    instance.interceptors.response.use(async (response) => {
+      console.log(`After response`, response.data);
+      const config = response.config;
+
+      if (config.url.indexOf('/login') >= 0 || config.url.indexOf('/refreshToken') >= 0) {
+        //router k can check token
+        return response;
+      }
+      const { code, msg } = response.data;
+      if (code && code === 401) {
+        if (msg && msg === "jwt expired") {
+          console.log(`Token expired!`, msg);
+          //1. get token from refreshToken
+          const { elements: { accessToken } } = await refreshToken();
+          if (accessToken) {
+            console.log(`After RefreshToken success`, accessToken);
+            //2.config headers new token
+            config.headers['x-token'] = accessToken;
+            //3.save new token
+            await instance.setLocalAccessToken(accessToken);
+
+            return instance(config);
+          }
+        }
+      }
+      return response;
+    }, (err) => {
+      return Promise.reject(err)
+    })
+
+    //function
+    const btn_login = document.getElementById('_login');
+    if (btn_login) {
+      btn_login.addEventListener('click', async () => {
+        const { status, elements: { accessToken, refreshToken } } = await login();
+        if (status === 'success') {
+          //set token vs timeExpired localStorage
+          await instance.setLocalAccessToken(accessToken);
+        }
+      })
+    }
+
+    const btn_getlist = document.getElementById('_getList');
+    if (btn_getlist) {
+      btn_getlist.addEventListener('click', async () => {
+        const { status, elements } = await getUser();
+        if (status === 'success') {
+          console.table(elements);
+        }
+      })
+    }
+
+    async function getUser() {
+      return (await instance.get('/users')).data;
+    }
+
+    async function login() {
+      return (await instance.get('/login')).data;
+    }
+    async function refreshToken() {
+      return (await instance.get('/refreshToken')).data;
+    }
+
+    instance.setLocalAccessToken = async (accessToken) => {
+      window.localStorage.setItem('accessToken', accessToken)
+    }
+
+    instance.getLocalAccessToken = async () => {
+      return window.localStorage.getItem('accessToken') ?? null;
+    }
+
+  </script>
+
+</body>
+
+</html>

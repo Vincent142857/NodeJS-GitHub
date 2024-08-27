@@ -1,0 +1,42 @@
+GET http://localhost:3000
+
+###
+GET http://localhost:3000/abc
+
+###
+POST http://localhost:3000/user/register
+Content-Type: application/json
+
+{
+  "email": "vinhlong567@gmail.com",
+  "password": "12345678"
+}
+
+###
+POST http://localhost:3000/user/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTgyZjA4ZmIwOWM4OWQ5NzNhZWRlZjQiLCJpYXQiOjE3MDMwODc4OTgsImV4cCI6MTczNDY0NTQ5OH0.W8yGtfj4v77XcLivvIpnrjCrl5VlESt3by3vD32IVh4"
+}
+
+###
+POST http://localhost:3000/user/login
+Content-Type: application/json
+
+{
+  "email": "vinhlong505@gmail.com",
+  "password": "12345678"
+}
+
+###
+DELETE  http://localhost:3000/user/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTgyOWVkNGFkMWQzOTgxMzJhOWM1N2QiLCJpYXQiOjE3MDMwNzcwNjYsImV4cCI6MTczNDYzNDY2Nn0.uTDi741pxTHu6irjcxLlCgYPriZYOLWDAxWqP_eBI-k"
+}
+
+###
+GET http://localhost:3000/user/get-list
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTgyZjA4ZmIwOWM4OWQ5NzNhZWRlZjQiLCJpYXQiOjE3MDMwODgyNDUsImV4cCI6MTcwMzA4ODMwNX0.kVBRYji9tFCqQVLuBr4e4pwhOxa0K61sIkQrxv_19Sw
