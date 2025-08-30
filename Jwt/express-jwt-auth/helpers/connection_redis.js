@@ -1,7 +1,7 @@
 const { createClient } = require('redis');
+
 const client = createClient({
-  port: 6379,
-  host: '127.0.0.1'
+  url: 'redis://127.0.0.1:6379'
 });
 
 client.on('error', (err) => console.log('Redis Client Error', err));

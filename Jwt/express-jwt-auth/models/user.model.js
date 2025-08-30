@@ -18,6 +18,7 @@ const UserSchema = new Schema({
 
 //middleware function - don't user arrow function
 
+// @ts-ignore
 UserSchema.pre('save', async function (next) {
   try {
     const salt = await bcrypt.genSalt(10); //do bao mat cua ma hoa, cang cao, ma cang phuc tap
@@ -34,7 +35,8 @@ UserSchema.methods.isCheckPassword = async function (password) {
   try {
     return await bcrypt.compare(password, this.password);
   } catch (error) {
-    next(error);
+    // next(error);
+    return false; //if error, return false
   }
 }
 

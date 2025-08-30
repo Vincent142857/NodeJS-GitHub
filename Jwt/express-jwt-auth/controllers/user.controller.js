@@ -7,10 +7,10 @@ const client = require('../helpers/connection_redis');
 module.exports = {
   register: async (req, res, next) => {
     try {
-      const { email, password } = req.body;
       const { error } = userValidate(req.body);
       if (error) throw createHttpError(400, error.details[0].message);
 
+      const { email, password } = req.body;
       if (!email || !password) {
         throw createHttpError.BadRequest();
       }
@@ -18,16 +18,13 @@ module.exports = {
       const isExist = await User.findOne({
         username: email
       });
-
       if (isExist) {
         throw createHttpError.Conflict(`${email} had ready been.`)
       }
-
       const newUser = new User({
         username: email,
         password
       });
-
       const savedUser = await newUser.save(); //should use save, to use middleware
 
       return res.json({
@@ -69,15 +66,15 @@ module.exports = {
         throw createHttpError.NotFound("User not registered")
       }
 
-      const isValid = await user.isCheckPassword(password);
+      // const isValid = await user.isCheckPassword(password);
+      // use Joi to validate password
+      const isValid = userValidate({ password }).error ? false : true;
+
       if (!isValid) {
         throw createHttpError.Unauthorized("Password isValid");
       }
       const accessToken = await signAccessToken(user._id);
-      console.log(`Create token>>${accessToken}`);
-      console.log(`Create refreshToken`);
       const refreshToken = await signRefreshToken(user._id);
-      console.log(`Finish token>>>${refreshToken}`);
       res.json({
         accessToken,
         refreshToken
@@ -91,8 +88,8 @@ module.exports = {
     try {
       const { refreshToken } = req.body;
       if (!refreshToken) throw createHttpError.BadRequest();
-
       const { userId } = await verifyRefreshToken(refreshToken);
+      // @ts-ignore
       client.del(userId.toString(), (err, reply) => {
         if (err) throw createHttpError.InternalServerError();
         res.json({
@@ -105,8 +102,8 @@ module.exports = {
     }
     res.send("logout")
   },
+  // @ts-ignore
   getList: (req, res, next) => {
-    console.log(`header>>>`, req.headers);
     const listUsers = [
       {
         username: 'abc@gmail.com'

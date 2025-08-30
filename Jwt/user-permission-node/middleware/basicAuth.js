@@ -32,7 +32,7 @@ const authPage = (permission) => {
 //middleware - find course
 const authCourse = (req, res, next) => {
   const { number } = req.params;
-  const { courses } = req.user;
+  const { courses } = req.user; //form authUser
   if (!courses.includes(+number)) {
     return res.status(404).json("Course Not found");
   }

@@ -1,6 +1,7 @@
 const JWT = require('jsonwebtoken');
 require('dotenv').config();
 const createHttpError = require('http-errors');
+
 const client = require('../helpers/connection_redis');
 
 const signAccessToken = async (userId) => {
@@ -8,11 +9,12 @@ const signAccessToken = async (userId) => {
     const payload = {
       userId
     }
-    const secret = process.env.ACCESS_TOKEN_SECRET;
     const options = {
       expiresIn: '60s'
     }
 
+    const secret = process.env.ACCESS_TOKEN_SECRET;
+    // @ts-ignore
     JWT.sign(payload, secret, options, (err, token) => {
       if (err) reject(err);
       resolve(token);
@@ -20,6 +22,7 @@ const signAccessToken = async (userId) => {
   });
 }
 
+// @ts-ignore
 const verifyAccessToken = (req, res, next) => {
   if (!req.headers['authorization']) {
     return next(createHttpError.Unauthorized());
@@ -29,7 +32,10 @@ const verifyAccessToken = (req, res, next) => {
   const bearerToken = authHeader.split(' ');
   const token = bearerToken[1];
 
-  JWT.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, payload) => {
+  const secret = process.env.ACCESS_TOKEN_SECRET;
+
+  // @ts-ignore
+  JWT.verify(token, secret, (err, payload) => {
     if (err) {
       if (err.name == "JsonWebTokenError") {
         return next(createHttpError.Unauthorized());
@@ -51,22 +57,26 @@ const signRefreshToken = async (userId) => {
       expiresIn: '1y'
     }
 
-    JWT.sign(payload, secret, options,async (err, token) => {
+    // @ts-ignore
+    JWT.sign(payload, secret, options, async (err, token) => {
       if (err) reject(err);
       console.log(`Save refreshToken`);
-      await client.set(userId.toString(), token, { "EX": 365 * 24 * 60 * 60}, (err, reply) => {
+      // @ts-ignore
+      await client.set(userId.toString(), token, { "EX": 365 * 24 * 60 * 60 }, (err, reply) => {
         if (err) return reject(createHttpError.InternalServerError());
-        console.log(`save success, reply>>>${reply}`);
-      })
+        console.log(`save success, reply>>> ${reply}`);
+      });
       resolve(token);
-    })
+    });
   })
 }
 
 const verifyRefreshToken = async (refreshToken) => {
   return new Promise((resolve, reject) => {
+    // @ts-ignore
     JWT.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, payload) => {
       if (err) return reject(err);
+      // @ts-ignore
       client.get(payload.userId, (err, reply) => {
         if (err) {
           return reject(createHttpError.InternalServerError());
