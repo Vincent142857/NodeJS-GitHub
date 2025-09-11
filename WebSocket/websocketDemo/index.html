@@ -15,24 +15,43 @@
       padding: 10px;
       height: 200px;
       overflow-y: scroll;
+      margin-bottom: 10px;
     }
 
-    #input {
-      width: 80%;
+    #input,
+    #username {
+      width: 70%;
       padding: 5px;
     }
 
-    #send {
+    #send,
+    #setName {
       padding: 5px 10px;
+    }
+
+    .self {
+      color: blue;
+    }
+
+    .other {
+      color: green;
     }
   </style>
 </head>
 
 <body>
-  <h2>💬 Chat Real-time (WebSocket)</h2>
-  <div id="messages"></div>
-  <input id="input" type="text" placeholder="Nhập tin nhắn..." />
-  <button id="send">Gửi</button>
+  <h2>💬 Chat Real-time (WebSocket + Username)</h2>
+
+  <div>
+    <input id="username" type="text" placeholder="Nhập tên của bạn..." />
+    <button id="setName">OK</button>
+  </div>
+
+  <div id="chat" style="display:none;">
+    <div id="messages"></div>
+    <input id="input" type="text" placeholder="Nhập tin nhắn..." />
+    <button id="send">Gửi</button>
+  </div>
 
   <script>
     const ws = new WebSocket("ws://localhost:8080");
@@ -40,26 +59,45 @@
     const messagesDiv = document.getElementById("messages");
     const input = document.getElementById("input");
     const sendBtn = document.getElementById("send");
+    const usernameInput = document.getElementById("username");
+    const setNameBtn = document.getElementById("setName");
+    const chatDiv = document.getElementById("chat");
 
-    ws.onopen = () => {
-      console.log("✅ Kết nối WebSocket thành công!");
+    let username = "";
+
+    setNameBtn.onclick = () => {
+      if (usernameInput.value.trim()) {
+        username = usernameInput.value.trim();
+        chatDiv.style.display = "block";
+        usernameInput.disabled = true;
+        setNameBtn.disabled = true;
+      }
     };
 
     ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
       const msg = document.createElement("div");
-      msg.textContent = event.data;
+
+      if (data.user === username) {
+        msg.classList.add("self");
+        msg.textContent = `Bạn: ${data.text}`;
+      } else {
+        msg.classList.add("other");
+        msg.textContent = `${data.user}: ${data.text}`;
+      }
+
       messagesDiv.appendChild(msg);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     };
 
     sendBtn.onclick = () => {
-      if (input.value) {
-        ws.send(input.value);
+      if (input.value && username) {
+        ws.send(JSON.stringify({ user: username, text: input.value }));
         input.value = "";
       }
     };
 
-    // Gửi tin bằng Enter
+    // Gửi bằng Enter
     input.addEventListener("keypress", (e) => {
       if (e.key === "Enter") sendBtn.click();
     });
